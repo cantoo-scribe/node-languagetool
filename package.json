@@ -9,9 +9,7 @@
     "install": "node install.js"
   },
   "dependencies": {
-    "node-jre": "^0.2.3"
-  },
-  "devDependencies": {
+    "node-jre": "^0.2.3",
     "node-grd": "^0.4.0"
   },
   "homepage": "https://github.com/cantoo-scribe/node-languagetool#readme",
