@@ -1,6 +1,6 @@
 {
   "name": "@cantoo/node-languagetool",
-  "version": "0.4.1",
+  "version": "0.5.0",
   "license": "MIT",
   "description": "Node.js binding to the Language Tool spellchecker framework",
   "main": "index.js",
