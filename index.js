@@ -115,7 +115,14 @@ const send = cmd =>
     })
   )
 
+/**
+ * Spellchecks the provided text
+ * @param {string} text The text to be spellchecked
+ * @param {string} locale The locale code. Use `lt.languages()` to get a list of supported languages and their locale codes
+ * @returns {Promise<CheckResponse['matches']>}
+ */
 const check = async (text, locale) => {
+  /** @type {CheckResponse} */
   const { matches } = await send({
     command: 'check',
     text: text,
@@ -124,7 +131,12 @@ const check = async (text, locale) => {
   return matches
 }
 
+/**
+ * Retrieve all supported languages
+ * @returns {Promise<LanguagesResponse['languages']>}
+ */
 const languages = async () => {
+  /** @type {LanguagesResponse} */
   const { languages } = await send({ command: 'languages' })
   return languages
 }
