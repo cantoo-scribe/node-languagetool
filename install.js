@@ -21,4 +21,21 @@
  * SOFTWARE.
  */
 
-require('.').install(err => require('process').exit(err ? 1 : 0));
+const path = require('path')
+const fs = require('fs')
+const grd = require('node-grd')
+
+if (fs.existsSync(path.resolve(__dirname, 'lt'))) process.exit(0)
+
+grd.install(
+  'schreiben',
+  'node-languagetool-service',
+  __dirname,
+  'lt',
+  err => {
+    if (!err) return process.exit(0)
+    console.error(err)
+    return console.exit(1)
+  },
+  process.env.GITHUB_OAUTH_TOKEN
+)

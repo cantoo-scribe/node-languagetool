@@ -21,111 +21,112 @@
  * SOFTWARE.
  */
 
- "use strict";
+/**
+ * @typedef {Object} Match
+ * @property {number} offset Offset within the provided text
+ * @property {number} length Length of the misspelled text fragment
+ * @property {string} message Long description
+ * @property {string} shortMessage Short description
+ * @property {string[]} replacements Replacement options
+ * @property {string} ruleId Key of the underlying rule
+ * @property {string} ruleDescription Description of the rule
+ * @property {string} ruleIssueType Issue type of the rule
+ * @property {string} ruleCategoryId ID of the category this rule belongs to
+ * @property {string} ruleCategoryName Description of the category this rule belongs to
+ */
 
-(function(){
+/**
+ * @typedef {Object} CheckResponse
+ * @property {number} code
+ * @property {Match[]} matches
+ */
 
-  const fs = require('fs');
-  const path = require('path');
-  const process = require('process');
-  const jre = require('node-jre');
-  const grd = require('node-grd')
+/**
+ * @typedef {Object} Language
+ * @property {string} name Full name of the language (and variant)
+ * @property {string} locale Locale code of the language variant
+ */
 
-  const smoketest = exports.smoketest = () => new Promise((resolve, reject) =>
-    check('This is wong.', 'en-US').then(
-      res => {
-        try {
-          var match = res.matches[0];
-          if (match.offset === 8 && match.length === 4)
-            resolve();
-          else
-            reject('Check was wrong.');
-        } catch (ex) {
-          reject(ex);
-        }
-      },
-      err => reject(err)
-    )
-  );
+/**
+ * @typedef {Object} LanguagesResponse
+ * @property {number} code
+ * @property {Language[]} languages
+ */
 
-  const install = exports.install = () => new Promise((resolve, reject) =>
-    grd.install(
-      'schreiben',
-      'node-languagetool-service',
-      __dirname,
-      'lt',
-      err => err ? reject(err) : resolve(),
-      process.env.GITHUB_OAUTH_TOKEN
-    )
-  );
+const path = require('path')
+const jre = require('node-jre')
 
+let service
+const queue = []
 
-  var service, queue = [];
+// const kill = () => {
+//   if (service) service.kill()
+//   service = null
+// }
 
-  const kill = exports.kill = () => {
-    if (service)
-      service.kill();
-    service = null;
-  };
+const writeTopCommand = () =>
+  service.stdin.write(JSON.stringify(queue[queue.length - 1].cmd) + '\n')
 
-  const writeTopCommand = () =>
-    service.stdin.write(JSON.stringify(queue[queue.length - 1].cmd) + '\n');
-
-  const start = exports.start = () => new Promise((resolve, reject) => {
-    const ltdir = path.join(__dirname, 'lt');
-    if (service)
-      resolve();
-    else {
+const start = () =>
+  new Promise((resolve, reject) => {
+    const ltdir = path.resolve(__dirname, 'lt', 'lt')
+    if (service) {
+      resolve()
+    } else {
       service = jre.spawn(
-        [ ltdir, path.join(ltdir, 'languagetool.jar'), 'resources' ],
+        [ltdir, path.resolve(ltdir, 'languagetool.jar'), 'resources'],
         'Service',
         [],
         { encoding: 'utf8' }
-      );
-      service.on('error', err => reject(err));
+      )
+      service.on('error', err => reject(err))
       service.stdout.on('data', line => {
-        line = line.toString().trim();
+        line = line.toString().trim()
         if (line.length > 0) {
-          line = JSON.parse(line);
-          var entry = queue.pop();
-          if (line.code === 200 && entry.resolve)
-            entry.resolve(line);
-          else if (line.code != 200 && entry.reject)
-            entry.reject(line);
+          line = JSON.parse(line)
+          const entry = queue.pop()
+          if (line.code === 200 && entry.resolve) entry.resolve(line)
+          else if (line.code !== 200 && entry.reject) entry.reject(line)
         }
-      });
-      if(queue.length > 0)
-        writeTopCommand();
-      resolve();
+      })
+      if (queue.length > 0) writeTopCommand()
+      resolve()
     }
-  });
+  })
 
-  const stop = exports.stop = () => new Promise((resolve, reject) => {
-    kill();
-    resolve();
-  });
+// const stop = () =>
+//   new Promise((resolve, reject) => {
+//     kill()
+//     resolve()
+//   })
 
-  const restart = exports.start = () => stop().then(
-    (resolve, reject) => start().then(resolve, reject)
-  );
+// const restart = () => stop().then((resolve, reject) => start().then(resolve, reject))
 
-  const send = exports.send = cmd => new Promise((resolve, reject) => start().then(() => {
-    var entry = {
-      cmd: cmd,
-      resolve: resolve,
-      reject: reject
-    };
-    queue.unshift(entry);
-    if(queue.length === 1)
-      writeTopCommand();
-  }));
+const send = cmd =>
+  new Promise((resolve, reject) =>
+    start().then(() => {
+      const entry = {
+        cmd: cmd,
+        resolve: resolve,
+        reject: reject,
+      }
+      queue.unshift(entry)
+      if (queue.length === 1) writeTopCommand()
+    })
+  )
 
-  const check = exports.check = (text, locale) => send({
-    command: "check",
+const check = async (text, locale) => {
+  const { matches } = await send({
+    command: 'check',
     text: text,
-    language: locale.toString()
-  });
+    language: locale.toString(),
+  })
+  return matches
+}
 
-  const languages = exports.languages = () => send({ command: "languages" });
+const languages = async () => {
+  const { languages } = await send({ command: 'languages' })
+  return languages
+}
 
-})();
+module.exports = { check, languages }

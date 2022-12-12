@@ -21,9 +21,20 @@
  * SOFTWARE.
  */
 
-const process = require('process');
-console.log('Testing...');
-require('.').smoketest().then(
-  () => { console.log('Success'); process.exit(0); },
-  err => { console.error(err); process.exit(1); }
-);
+const lt = require('.')
+
+console.log('Testing...')
+
+lt.check('This is wong.', 'en-US')
+  .then(matches => {
+    if (matches.length && matches[0].offset === 8 && matches[0].length === 4) {
+      console.info('Success')
+      process.exit(0)
+    }
+
+    throw new Error('Check was wrong.')
+  })
+  .catch(err => {
+    console.error(err)
+    process.exit(1)
+  })

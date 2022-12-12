@@ -21,12 +21,11 @@ npm install --save node-languagetool
 The following code
 
 ```javascript
-var lt = require('node-languagetool');
+const lt = require('node-languagetool')
 
-lt.check(
-  'This is wong. Tolt you so.',
-  'en-US'
-).then(res => console.log(JSON.stringify(res, null, 4)));
+lt.check('This is wong. Tolt you so.', 'en-US').then(res =>
+  console.log(JSON.stringify(res, null, 4))
+)
 ```
 
 should print something like this:
@@ -104,22 +103,25 @@ To get all supported languages you can call the following:
 
 ```javascript
 lt.languages().then(res => {
-    res.languages.forEach(
-      l => console.log('Language: ' + l.name + ' Locale: ' + l.locale)
-    ); // Should print a list of language-locale pairs
-});
+  res.languages.forEach(
+    l => console.log('Language: ' + l.name + ' Locale: ' + l.locale)
+  ) // Should print a list of language-locale pairs
+})
 ```
 
 ## API
 
 `lt.install()` Downloads and prepares LanguageTool.
 It is automatically called during module installation.
+
 - Returns a `Promise` object.
 
 `lt.check(text, locale)` Spellchecks the provided text.
+
 - `text` (string). The text to be spellchecked.
 - `locale` (string). The locale code. Use `lt.languages()` to get a list of supported languages and their locale codes.
 - Returns a `Promise` object. It will resolve to an object of the following form:
+
 ```javascript
 {
     "code": 200, // indicates a successful request
@@ -144,7 +146,9 @@ It is automatically called during module installation.
 ```
 
 `lt.languages()` Retrieve all supported languages.
+
 - Returns a `Promise` object. It will resolve to an object of the following form:
+
 ```javascript
 {
     "code": 200, // indicates a successful request
@@ -158,6 +162,7 @@ It is automatically called during module installation.
 ```
 
 ## License
+
 MIT License
 
 Copyright (c) 2016 schreiben
